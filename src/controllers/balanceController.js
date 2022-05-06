@@ -70,3 +70,45 @@ export async function listBalance(req, res) {
         return res.sendStatus(500);
     }
 }
+
+export async function updateBalance(req, res) {
+    const { id } = req.params;
+    const { value } = req.body;
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '').trim();
+
+    // SCHEMA
+    const valueSchema = Joi.number().positive().required();
+
+    if (!id || !value || !token) {
+        return res.sendStatus(422);
+    }
+
+    const validation = valueSchema.validateAsync(value, { abortEarly: false });
+    if (validation.error) {
+        return res.sendStatus(422);
+    }
+
+    try {
+        const session = await db.collection('sessions').findOne({ token });
+        if (!session) {
+            return res.sendStatus(404);
+        }
+
+        const user = await db.collection('users').findOne({ _id: session.userId });
+        if (!user) {
+            return res.sendStatus(409);
+        }
+
+        const balanceCollection = db.collection('balance');
+        const cash = await balanceCollection.findOne({ _id: new ObjectId(id) });
+        if (!cash) {
+            return res.sendStatus(410);
+        }
+
+        await balanceCollection.updateOne({ _id: cash._id }, { $set: { value } });
+        return res.sendStatus(201);
+    } catch (e) {
+        return res.status(500).send(e.message);
+    }
+}
