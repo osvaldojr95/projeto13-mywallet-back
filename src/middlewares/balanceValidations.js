@@ -38,7 +38,7 @@ export async function updateValidate(req, res, next) {
 
     const validation = valueSchema.validate(value, { abortEarly: false });
     if (validation.error) {
-        return res.sendStatus(409);
+        return res.sendStatus(422);
     }
 
     next();

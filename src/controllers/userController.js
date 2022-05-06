@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
 import db from './dbController.js';
@@ -13,7 +12,7 @@ export async function signUp(req, res) {
     try {
         const userExist = await db.collection('users').findOne({ email });
         if (userExist) {
-            return res.sendStatus(404);
+            return res.sendStatus(409);
         }
 
         user.password = bcrypt.hashSync(password, parseInt(process.env.HASH));
@@ -34,7 +33,7 @@ export async function signIn(req, res) {
             return res.sendStatus(404);
         }
         if (!bcrypt.compareSync(password, user.password)) {
-            return res.sendStatus(402);
+            return res.sendStatus(401);
         }
 
         const token = uuid();
@@ -42,7 +41,7 @@ export async function signIn(req, res) {
         const session = await sessionCollection.findOne({ userId: new ObjectId(user._id) });
         if (session) {
             await sessionCollection.updateOne({ _id: session._id }, { $set: { token } });
-            return res.sendStatus(203);
+            return res.sendStatus(200);
         }
 
         await sessionCollection.insertOne({ userId: user._id, token });
@@ -65,11 +64,11 @@ export async function signOut(req, res) {
         const session = await sessionCollection.findOne({ token });
 
         if (!session) {
-            return res.sendStatus(203);
+            return res.sendStatus(401);
         }
 
         await sessionCollection.deleteOne({ _id: new ObjectId(session._id) });
-        return res.sendStatus(201);
+        return res.sendStatus(200);
     } catch (e) {
         return res.status(500).send(e.message);
     }

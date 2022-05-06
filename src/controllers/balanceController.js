@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import db from './dbController.js';
 import { ObjectId } from 'mongodb';
 
@@ -11,12 +10,12 @@ export async function addBalance(req, res) {
     try {
         const session = await db.collection('sessions').findOne({ token });
         if (!session) {
-            return res.sendStatus(404);
+            return res.sendStatus(401);
         }
 
         const user = await db.collection('users').findOne({ _id: new ObjectId(session.userId) });
         if (!user) {
-            return res.sendStatus(409);
+            return res.sendStatus(404);
         }
         
         const transaction = { name, value, 'operation': (operation === 'true') };
@@ -38,16 +37,16 @@ export async function listBalance(req, res) {
     try {
         const session = await db.collection('sessions').findOne({ token });
         if (!session) {
-            return res.sendStatus(404);
+            return res.sendStatus(401);
         }
 
         const user = await db.collection('users').findOne({ _id: new ObjectId(session.userId) });
         if (!user) {
-            return res.sendStatus(409);
+            return res.sendStatus(404);
         }
 
         const balances = await db.collection('balance').find({ userId: new ObjectId(user._id) }).toArray();
-        return res.status(201).send([...balances].map((cash) => {
+        return res.status(200).send([...balances].map((cash) => {
             return { 'id': cash._id, 'name': cash.name, 'value': cash.value, 'operation': cash.operation }
         }));
     } catch (e) {
@@ -64,22 +63,22 @@ export async function updateBalance(req, res) {
     try {
         const session = await db.collection('sessions').findOne({ token });
         if (!session) {
-            return res.sendStatus(404);
+            return res.sendStatus(401);
         }
 
         const user = await db.collection('users').findOne({ _id: session.userId });
         if (!user) {
-            return res.sendStatus(409);
+            return res.sendStatus(404);
         }
 
         const balanceCollection = db.collection('balance');
         const cash = await balanceCollection.findOne({ _id: new ObjectId(id) });
         if (!cash) {
-            return res.sendStatus(410);
+            return res.sendStatus(404);
         }
 
         await balanceCollection.updateOne({ _id: cash._id }, { $set: { value } });
-        return res.sendStatus(201);
+        return res.sendStatus(200);
     } catch (e) {
         return res.status(500).send(e.message);
     }
@@ -97,22 +96,22 @@ export async function removeBalance(req, res) {
     try {
         const session = await db.collection('sessions').findOne({ token });
         if (!session) {
-            return res.sendStatus(404);
+            return res.sendStatus(401);
         }
 
         const user = await db.collection('users').findOne({ _id: session.userId });
         if (!user) {
-            return res.sendStatus(409);
+            return res.sendStatus(404);
         }
 
         const balanceCollection = db.collection('balance');
         const cash = await balanceCollection.findOne({ _id: new ObjectId(id) });
         if (!cash) {
-            return res.sendStatus(410);
+            return res.sendStatus(404);
         }
 
         await balanceCollection.deleteOne({ _id: cash._id });
-        return res.sendStatus(201);
+        return res.sendStatus(200);
     } catch (e) {
         return res.status(500).send(e.message);
     }
