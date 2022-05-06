@@ -82,3 +82,26 @@ export async function signIn(req, res) {
         return res.status(500).send(e.message);
     }
 }
+
+export async function signOut(req, res) {
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '').trim();
+
+    if (!token) {
+        return res.sendStatus(422);
+    }
+
+    try {
+        const sessionCollection = db.collection('sessions');
+        const session = await sessionCollection.findOne({ token });
+
+        if (!session) {
+            return res.sendStatus(203);
+        }
+
+        await sessionCollection.deleteOne({ _id: new ObjectId(session._id) });
+        return res.sendStatus(201);
+    } catch (e) {
+        return res.status(500).send(e.message);
+    }
+}
