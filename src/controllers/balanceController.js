@@ -8,18 +8,6 @@ export async function addBalance(req, res) {
     const { authorization } = req.headers;
     const token = authorization?.replace('Bearer ', '').trim();
 
-    // SCHEMA
-    const balanceSchema = Joi.object({
-        'name': Joi.string().alphanum().min(1).required(),
-        'value': Joi.number().positive().required(),
-        'operation': Joi.boolean().required()
-    });
-
-    if (!name || !value || !token) {
-        return res.sendStatus(422);
-    }
-    const transaction = { name, value, 'operation': (operation === 'true') };
-
     try {
         const session = await db.collection('sessions').findOne({ token });
         if (!session) {
@@ -30,12 +18,8 @@ export async function addBalance(req, res) {
         if (!user) {
             return res.sendStatus(409);
         }
-
-        const validation = balanceSchema.validateAsync(transaction, { abortEarly: false });
-        if (validation.error) {
-            return res.sendStatus(422);
-        }
-
+        
+        const transaction = { name, value, 'operation': (operation === 'true') };
         await db.collection('balance').insertOne({ 'userId': user._id, ...transaction });
         return res.sendStatus(201);
     } catch (e) {
@@ -76,18 +60,6 @@ export async function updateBalance(req, res) {
     const { value } = req.body;
     const { authorization } = req.headers;
     const token = authorization?.replace('Bearer ', '').trim();
-
-    // SCHEMA
-    const valueSchema = Joi.number().positive().required();
-
-    if (!id || !value || !token) {
-        return res.sendStatus(422);
-    }
-
-    const validation = valueSchema.validateAsync(value, { abortEarly: false });
-    if (validation.error) {
-        return res.sendStatus(422);
-    }
 
     try {
         const session = await db.collection('sessions').findOne({ token });

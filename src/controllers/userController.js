@@ -8,25 +8,9 @@ dotenv.config();
 
 export async function signUp(req, res) {
     const { name, email, password } = req.body;
-
-    // SCHEMA
-    const userSchema = Joi.object({
-        'name': Joi.string().alphanum().min(1).required(),
-        'email': Joi.string().min(1).required(),
-        'password': Joi.string().alphanum().min(1).required()
-    });
-
-    if (!name || !email || !password) {
-        return res.sendStatus(422);
-    }
-
+    const user = { name, email, password };
+    
     try {
-        const user = { name, email, password };
-        const validation = userSchema.validateAsync(user, { abortEarly: false });
-        if (validation.error) {
-            return res.sendStatus(422);
-        }
-
         const userExist = await db.collection('users').findOne({ email });
         if (userExist) {
             return res.sendStatus(404);
@@ -43,21 +27,6 @@ export async function signUp(req, res) {
 export async function signIn(req, res) {
     const email = req.headers.user;
     const { password } = req.body;
-
-    // SCHEMA
-    const userSchema = Joi.object({
-        'email': Joi.string().min(1).required(),
-        'password': Joi.string().min(1).required()
-    });
-
-    if (!email || !password) {
-        return res.sendStatus(422);
-    }
-
-    const validation = userSchema.validateAsync({ email, password });
-    if (validation.error) {
-        return res.sendStatus(407);
-    }
 
     try {
         const user = await db.collection('users').findOne({ email });
