@@ -112,3 +112,36 @@ export async function updateBalance(req, res) {
         return res.status(500).send(e.message);
     }
 }
+
+export async function removeBalance(req, res) {
+    const { id } = req.params;
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '').trim();
+
+    if (!id || !token) {
+        return res.sendStatus(422);
+    }
+
+    try {
+        const session = await db.collection('sessions').findOne({ token });
+        if (!session) {
+            return res.sendStatus(404);
+        }
+
+        const user = await db.collection('users').findOne({ _id: session.userId });
+        if (!user) {
+            return res.sendStatus(409);
+        }
+
+        const balanceCollection = db.collection('balance');
+        const cash = await balanceCollection.findOne({ _id: new ObjectId(id) });
+        if (!cash) {
+            return res.sendStatus(410);
+        }
+
+        await balanceCollection.deleteOne({ _id: cash._id });
+        return res.sendStatus(201);
+    } catch (e) {
+        return res.status(500).send(e.message);
+    }
+}
