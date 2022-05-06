@@ -42,3 +42,31 @@ export async function addBalance(req, res) {
         return res.sendStatus(500);
     }
 }
+
+export async function listBalance(req, res) {
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '').trim();
+
+    if (!token) {
+        return res.sendStatus(422);
+    }
+
+    try {
+        const session = await db.collection('sessions').findOne({ token });
+        if (!session) {
+            return res.sendStatus(404);
+        }
+
+        const user = await db.collection('users').findOne({ _id: new ObjectId(session.userId) });
+        if (!user) {
+            return res.sendStatus(409);
+        }
+
+        const balances = await db.collection('balance').find({ userId: new ObjectId(user._id) }).toArray();
+        return res.status(201).send([...balances].map((cash) => {
+            return { 'id': cash._id, 'name': cash.name, 'value': cash.value, 'operation': cash.operation }
+        }));
+    } catch (e) {
+        return res.sendStatus(500);
+    }
+}
