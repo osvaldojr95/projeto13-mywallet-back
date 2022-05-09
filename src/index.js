@@ -7,6 +7,6 @@ app.use(json());
 app.use(cors());
 app.use(routes);
 
-app.listen(5002, () => {
-    console.log('Servidor online');
+app.listen(process.env.PORT, () => {
+    console.log('Servidor online na porta ' + process.env.PORT);
 });
