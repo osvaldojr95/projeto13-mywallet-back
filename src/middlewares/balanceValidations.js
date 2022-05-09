@@ -3,9 +3,8 @@ import Joi from "joi";
 const balanceSchema = Joi.object({
     'name': Joi.string().alphanum().min(1).required(),
     'value': Joi.number().positive().required(),
-    'operation': Joi.boolean().required()
+    'operation': Joi.boolean()
 });
-const valueSchema = Joi.number().positive().required();
 
 export async function addValidate(req, res, next) {
     const { operation } = req.query;
@@ -28,7 +27,7 @@ export async function addValidate(req, res, next) {
 
 export async function updateValidate(req, res, next) {
     const { id } = req.params;
-    const { value } = req.body;
+    const { name, value } = req.body;
     const { authorization } = req.headers;
     const token = authorization?.replace('Bearer ', '').trim();
 
@@ -36,7 +35,9 @@ export async function updateValidate(req, res, next) {
         return res.sendStatus(422);
     }
 
-    const validation = valueSchema.validate(value, { abortEarly: false });
+    const transaction = { name, value };
+    console.log(transaction);
+    const validation = balanceSchema.validate(transaction, { abortEarly: false });
     if (validation.error) {
         return res.sendStatus(422);
     }

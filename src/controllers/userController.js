@@ -8,7 +8,7 @@ dotenv.config();
 export async function signUp(req, res) {
     const { name, email, password } = req.body;
     const user = { name, email, password };
-    
+
     try {
         const userExist = await db.collection('users').findOne({ email });
         if (userExist) {
@@ -41,11 +41,11 @@ export async function signIn(req, res) {
         const session = await sessionCollection.findOne({ userId: new ObjectId(user._id) });
         if (session) {
             await sessionCollection.updateOne({ _id: session._id }, { $set: { token } });
-            return res.sendStatus(200);
+            return res.status(200).send({ name: user.name, token });
         }
 
         await sessionCollection.insertOne({ userId: user._id, token });
-        return res.sendStatus(201);
+        return res.status(201).send({ name: user.name, token });
     } catch (e) {
         return res.status(500).send(e.message);
     }
